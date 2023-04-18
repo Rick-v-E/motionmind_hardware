@@ -1,0 +1,9 @@
+<library path="motionmind_hardware">
+  <class name="motionmind_hardware/MotionmindHardware"
+         type="motionmind_hardware::MotionmindHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The ros2_control for SolutionCubed Motionmind controllers using a system hardware interface-type.
+    </description>
+  </class>
+</library>

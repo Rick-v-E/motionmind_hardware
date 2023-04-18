@@ -1,0 +1,212 @@
+#!/usr/bin/env python3
+# Copyright (c) 2023 Rick-v-E.
+#
+# This file is part of the ROS2 Motionmind Hardware Interface
+# (see https//github.com/Rick-v-E/motionmind_hardware).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import annotations
+
+from serial import Serial
+from dataclasses import dataclass, asdict
+from time import sleep
+
+
+@dataclass
+class MotionMindStatus:
+    NEGLIMIT: bool
+    POSLIMIT: bool
+    BRAKE: bool
+    INDEX: bool
+    BADRC: bool
+    VNLIMIT: bool
+    VPLIMIT: bool
+    CURRENTLIMIT: bool
+    PWMLIMIT: bool
+    INPOSITION: bool
+    TEMPFAULT: bool
+
+    def __str__(self) -> str:
+        string = "Status: \n"
+        for k, v in asdict(self).items():
+            string += f"\t{k}: {v}\n"
+
+        return string
+
+class BitArray:
+    """
+    Source: https://stackoverflow.com/questions/34496234/is-there-a-builtin-bitset-thats-similar-to-the-stdbitset-from-c
+    """
+
+    def __init__(self, lenght: int) -> None:
+        self.values = bytearray(b"\x00" * (lenght // 8 + (1 if lenght % 8 else 0)))
+        self.lenght = lenght
+
+    def __setitem__(self, index: int, value: int) -> None:
+        value = int(bool(value)) << index % 8
+        mask = 0xFF ^ index % 8
+        self.values[index // 8] &= mask
+        self.values[index // 8] |= value
+
+    def __getitem__(self, index: int) -> bool:
+        mask = 1 << index % 8
+        return bool(self.values[index // 8] & mask)
+
+    def __len__(self) -> int:
+        return self.lenght
+
+    def __repr__(self) -> str:
+        return "<{}>".format(", ".join("{:d}".format(value) for value in self))
+
+
+def to_motionmind_cmd(command: int, address: int, value: int, byte_length: int = 4) -> list[int]:
+    if isinstance(value, BitArray):
+        data = list(value.values)
+    else:
+        data = list(value.to_bytes(byte_length, "little"))
+
+    checksum = (command + address + sum(data)).to_bytes(byte_length + 2, "little")[0]
+    return [command, address, *data, checksum]
+
+
+def get_position(connection: Serial, address: int) -> int:
+    """
+    Function that reads the position from the motorcontrollers registry.
+
+    :param connection: The opened serial connection.
+    :param address: The address of the motorcontroller on the serial bus.
+    :returns: The position of the motorcontroller.
+    """
+    _COMMAND = 26
+    _REGISTRY_INDEX = 0
+    _EXPECTED_BYTE_LENGTH = 4
+
+    registry_array = BitArray(32)
+    registry_array[_REGISTRY_INDEX] = 1
+
+    cmd_array = to_motionmind_cmd(_COMMAND, address, registry_array, byte_length=4)
+    connection.write(cmd_array)
+
+    result = connection.read(_EXPECTED_BYTE_LENGTH + 2)
+
+    return int.from_bytes(result[1 : _EXPECTED_BYTE_LENGTH + 1], byteorder="little")
+
+
+def set_position(connection: Serial, address: int, position: int) -> int:
+    """
+    Function to set the position of the motorcontroller.
+
+    :param connection: The opened serial connection.
+    :param address: The address of the motorcontroller on the serial bus.
+    :param position: The new position of the motorcontroller.
+    :returns: The old position of the motorcontroller.
+    """
+    _COMMAND = 21
+    _EXPECTED_BYTE_LENGTH = 4
+
+    cmd_array = to_motionmind_cmd(_COMMAND, address, position, byte_length=4)
+    connection.write(cmd_array)
+
+    result = connection.read(_EXPECTED_BYTE_LENGTH + 2)
+    return int.from_bytes(result[1 : _EXPECTED_BYTE_LENGTH + 1], byteorder="little")
+
+
+def get_status(connection: Serial, address: int) -> MotionMindStatus:
+    _COMMAND = 26
+    _REGISTRY_INDEX = 16
+    _EXPECTED_BYTE_LENGTH = 2
+
+    registry_array = BitArray(32)
+    registry_array[_REGISTRY_INDEX] = 1
+
+    cmd_array = to_motionmind_cmd(_COMMAND, address, registry_array, byte_length=4)
+    connection.write(cmd_array)
+
+    result = connection.read(_EXPECTED_BYTE_LENGTH + 2)
+    result = int.from_bytes(result[1 : _EXPECTED_BYTE_LENGTH + 1], byteorder="little")
+
+    status = []
+    for i in range(11):
+        status.append(True if result & (1 << i) else False)
+
+    return MotionMindStatus(*status)
+
+
+if __name__ == "__main__":
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(description="Tool to check a single MotionMind Rev3 motorcontroller.")
+    parser.add_argument(
+        "address",
+        type=int,
+        help="Address of the motorcontroller.",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        help="Device string of the motorcontroller.",
+        default="/dev/ttyS0",
+    )
+    parser.add_argument("--baudrate", type=int, help="Baudrate of serial connection", default=19200)
+    parser.add_argument("--timeout", type=float, help="Timeout for ")
+    args = parser.parse_args()
+
+    connection = Serial(args.device, args.baudrate, timeout=2)
+
+    if connection.isOpen():
+        connection.close()
+
+    connection.open()
+
+    
+    status = get_status(connection, args.address)
+
+    print(f"Connected to motorcontroller {args.address}")
+
+    print(status)
+
+    position = get_position(connection, args.address)
+
+    print(f"Current motor position: {position}")
+
+    answer = input(f"This will start motorcontroller {args.address} to move! Do you want to continue [n/y]? ")
+    if answer.lower() != "y":
+        exit(1)
+
+    set_position(connection, args.address, position + 20)
+
+    sleep(1)
+
+    position = get_position(connection, args.address)   
+
+    print(f"Current motor position: {position}")
+
+    sleep(1)
+
+    set_position(connection, args.address, position - 40)
+
+    sleep(1)
+
+    position = get_position(connection, args.address)
+
+    print(f"Current motor position: {position}")
+
+    set_position(connection, args.address, position + 20)
+
+    sleep(1)
+
+    position = get_position(connection, args.address)
+
+    print(f"Current motor position: {position}")

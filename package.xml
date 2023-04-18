@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>motionmind_hardware</name>
+  <version>1.0.0</version>
+  <description>Hardware interface for Solution Cubed Motionmind rev2/3 motor controllers.</description>
+  <maintainer email="rick.vanessen@wur.nl">Rick-v-E</maintainer>
+  <license file="LICENSE">GPLv3</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>ament_cmake_python</depend>
+  
+  <depend>controller_interface</depend>
+  <depend>controller_manager</depend>
+  <depend>controller_manager_msgs</depend>
+  <depend>hardware_interface</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>lifecycle_msgs</depend>
+  <depend>pluginlib</depend>
+  <depend>serial</depend>
+  <depend>rclcpp</depend>
+
+  <!-- Calibrate steering script dependencies -->
+  <depend>rclpy</depend>
+  <depend>python3-serial</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
