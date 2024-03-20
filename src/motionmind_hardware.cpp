@@ -439,11 +439,13 @@ namespace motionmind_hardware
         if (mode_result.size() != REGISTER_MODE.response_size + 2)
         {
             RCLCPP_WARN_STREAM(rclcpp::get_logger(HW_NAME), "Response of Motionmind controller " << static_cast<int>(address) << " has not the expected size!");
+            return return_type::ERROR;
         }
 
         if (!checkChecksum(mode_result))
         {
             RCLCPP_WARN_STREAM(rclcpp::get_logger(HW_NAME), "Checksum of response on Motionmind controller " << static_cast<int>(address) << " is not valid!");
+            return return_type::ERROR;
         }
 
         if (mode_result[1] == expected_mode)
@@ -471,11 +473,13 @@ namespace motionmind_hardware
         if (status_result.size() != REGISTER_POSITION.response_size + REGISTER_STATUS.response_size + 2)
         {
             RCLCPP_WARN_STREAM(rclcpp::get_logger(HW_NAME), "Response of Motionmind controller " << static_cast<int>(address) << " has not the expected size!");
+            return return_type::ERROR;
         }
 
         if (!checkChecksum(status_result))
         {
             RCLCPP_WARN_STREAM(rclcpp::get_logger(HW_NAME), "Checksum of response on Motionmind controller " << static_cast<int>(address) << " is not valid!");
+            return return_type::ERROR;
         }
 
         position =
@@ -506,11 +510,13 @@ namespace motionmind_hardware
         if (status_result.size() != REGISTER_VELOCITY.response_size + REGISTER_STATUS.response_size + 2)
         {
             RCLCPP_WARN_STREAM(rclcpp::get_logger(HW_NAME), "Response of Motionmind controller " << static_cast<int>(address) << " has not the expected size!");
+            return return_type::ERROR;
         }
 
         if (!checkChecksum(status_result))
         {
             RCLCPP_WARN_STREAM(rclcpp::get_logger(HW_NAME), "Checksum of response on Motionmind controller " << static_cast<int>(address) << " is not valid!");
+            return return_type::ERROR;
         }
 
         velocity =
