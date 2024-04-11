@@ -157,20 +157,6 @@ if __name__ == "__main__":
     parser.add_argument("--timeout", type=float, help="Timeout for ")
     args = parser.parse_args()
 
-    # TODO: remove this when limit switches are working again
-    if args.address == 2:
-        connection = Serial(args.device, args.baudrate, timeout=2)
-
-        if connection.isOpen():
-            connection.close()
-
-        connection.open()
-
-        print("Limit switches motor 2 are not working!")
-        position = get_position(connection, args.address)
-        print(f"Current position: {position}")
-        exit(1)
-
     answer = input(f"This will start motorcontroller {args.address} to move! Do you want to continue [n/y]? ")
     if answer.lower() != "y":
         exit(1)
