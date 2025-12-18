@@ -107,7 +107,7 @@ namespace motionmind_hardware
             RCLCPP_INFO_STREAM(rclcpp::get_logger(HW_NAME), "Opening serial port " << port_ << " with baudrate " << baudrate_ << "...");
 
             // Create serial connection
-            auto to = serial::Timeout::simpleTimeout(timeout_);
+            auto to = serial_cpp::Timeout::simpleTimeout(timeout_);
             serial_connection_.setPort(port_);
             serial_connection_.setBaudrate(baudrate_);
             serial_connection_.setTimeout(to);
@@ -130,17 +130,17 @@ namespace motionmind_hardware
             }
             perform_command_mode_switch(new_interfaces, old_interfaces);
         }
-        catch (serial::IOException &e)
+        catch (serial_cpp::IOException &e)
         {
             RCLCPP_FATAL_STREAM(rclcpp::get_logger(HW_NAME), "Unable to open serial connection : " << e.what());
             return CallbackReturn::ERROR;
         }
-        catch (serial::SerialException &e)
+        catch (serial_cpp::SerialException &e)
         {
             RCLCPP_FATAL_STREAM(rclcpp::get_logger(HW_NAME), "Unable to open serial connection : " << e.what());
             return CallbackReturn::ERROR;
         }
-        catch (serial::PortNotOpenedException &e)
+        catch (serial_cpp::PortNotOpenedException &e)
         {
             RCLCPP_FATAL_STREAM(rclcpp::get_logger(HW_NAME), "Unable to open serial connection : " << e.what());
             return CallbackReturn::ERROR;

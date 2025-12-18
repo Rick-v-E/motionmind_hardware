@@ -1,8 +1,6 @@
 # Motionmind Hardware Interface
 ROS2 control hardware interface for Solution Cubed Motionmind Rev2/3 motor controllers.
 
-This package depends on the `serial` package. For ROS2, there is no official release (yet). Therefore, clone and build [this](https://github.com/iwelch82/serial-ros2) package.
-
 ## Usage
 Add the plugin to the `ros2_control` tag in your URDF file:
 ```xml

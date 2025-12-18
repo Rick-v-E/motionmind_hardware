@@ -1,18 +1,27 @@
 cmake_minimum_required(VERSION 3.5)
-project(motionmind_hardware)
+project(motionmind_hardware LANGUAGES CXX)
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+include(FetchContent)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+FetchContent_Declare(
+  serial_cpp
+  GIT_REPOSITORY https://github.com/ami-iit/serial_cpp.git
+  GIT_TAG v1.3.4
+)
+
+FetchContent_GetProperties(serial_cpp)
+if(NOT serial_cpp_POPULATED)
+  FetchContent_Populate(serial_cpp)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  add_subdirectory(${serial_cpp_SOURCE_DIR} ${serial_cpp_BINARY_DIR})
 endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
-
 find_package(controller_interface REQUIRED)
 find_package(controller_manager REQUIRED)
 find_package(controller_manager_msgs REQUIRED)
@@ -20,7 +29,6 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
-find_package(serial REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
@@ -43,10 +51,11 @@ ament_target_dependencies(
   hardware_interface
   rclcpp_lifecycle
   lifecycle_msgs
-  serial
   pluginlib
   rclcpp
 )
+
+target_link_libraries(${PROJECT_NAME} serial_cpp)
 
 pluginlib_export_plugin_description_file(hardware_interface motionmind_hardware.xml)
 
@@ -72,7 +81,6 @@ ament_export_libraries(
 )
 ament_export_dependencies(
   hardware_interface
-  serial
   pluginlib
   rclcpp
 )

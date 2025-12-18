@@ -27,6 +27,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <bitset>
 #include <chrono>
 #include <functional>
+#include <serial_cpp/serial.h>
 
 #include <hardware_interface/handle.hpp>
 #include <hardware_interface/hardware_info.hpp>
@@ -34,7 +35,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 
-#include "serial/serial.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/macros.hpp"
 
@@ -156,7 +156,7 @@ namespace motionmind_hardware
     std::string port_;
     int baudrate_;
     int timeout_;
-    serial::Serial serial_connection_;
+    serial_cpp::Serial serial_connection_;
     bool use_dummy_ = false;
   };
 
