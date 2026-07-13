@@ -309,6 +309,15 @@ namespace motionmind_hardware
     {
         if (use_dummy_)
         {
+            // Mirror the commanded position into the position state
+            for (size_t i = 0; i < joints_.size(); i++)
+            {
+                if (!std::isnan(joints_[i].command.position))
+                {
+                    joints_[i].state.position = joints_[i].command.position;
+                    joints_[i].state.velocity = 0.0;
+                }
+            }
             return return_type::OK;
         }
 
