@@ -354,10 +354,32 @@ namespace motionmind_hardware
         return return_type::OK;
     }
 
-    return_type MotionmindHardware::write(const rclcpp::Time & /* time */, const rclcpp::Duration & /* period */)
+    return_type MotionmindHardware::write(const rclcpp::Time & /* time */, const rclcpp::Duration &period)
     {
         if (use_dummy_)
         {
+            // Mirror the commanded position/velocity into the matching state
+            for (size_t i = 0; i < joints_.size(); i++)
+            {
+                if (joints_[i].joint_info.command_interface_name == hardware_interface::HW_IF_POSITION)
+                {
+                    if (!std::isnan(joints_[i].command.position))
+                    {
+                        joints_[i].state.position = joints_[i].command.position;
+                        joints_[i].state.velocity = 0.0;
+                    }
+                }
+                else
+                {
+                    if (!std::isnan(joints_[i].command.velocity))
+                    {
+                        // Integrate the commanded velocity to simulate the position
+                        double rot_dist = joints_[i].command.velocity * period.seconds();
+                        joints_[i].state.position = std::fmod(joints_[i].state.position + rot_dist, PI2);
+                        joints_[i].state.velocity = joints_[i].command.velocity;
+                    }
+                }
+            }
             return return_type::OK;
         }
 
